@@ -1,9 +1,7 @@
+
 const express = require('express');
 const app = express();
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended:true}));
 const crypto = require('crypto')
-
 const mysql = require('mysql');
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -12,11 +10,31 @@ const connection = mysql.createConnection({
   password: 'root',
   database: 'mydb'
 });
+const session = require('express-session');
+const DynamoDBStore = require('connect-dynamodb')(session)
+const DynamoDBStoreOptions = {
+  table: "db-session",
+  AWSConfigJSON: {
+    region: 'us-east-1',
+    correctClockSkew: true,
+    httpOption: {
+      secureProtocol: 'TLSv1_method',
+      ciphers: "ALL"
+    },
+  },
+}
+app.use(session({
+  store: new DynamoDBStore(DynamoDBStoreOptions),
+  name: 'session-name',
+  secret: 'session-secret-key',
+  resave: false,
+  saveUninitialized: false
+}));
 
 // DB_Connect
 connection.connect((err) => {
   if (err)throw err;
-  console.log("DB.Connected!!");
+  console.log("database conected...");
 });
 
 app.set('view engine', 'ejs')
